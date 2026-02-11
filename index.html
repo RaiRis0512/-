@@ -135,20 +135,24 @@
             align-items: center;
             justify-content: space-between;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            cursor: pointer;
             transition: all 0.2s;
             border: 2px solid transparent;
-        }
-        
-        .location-item:active {
-            transform: scale(0.98);
-            border-color: var(--primary);
         }
         
         .location-item-left {
             display: flex;
             align-items: center;
             gap: 1rem;
+            flex: 1;
+            cursor: pointer;
+            padding: 0.5rem;
+            margin: -0.5rem;
+            border-radius: 0.5rem;
+            transition: all 0.2s;
+        }
+        
+        .location-item-left:active {
+            background: var(--gray-50);
         }
         
         .location-icon {
@@ -162,20 +166,17 @@
             color: var(--gray-900);
         }
         
-        .location-chevron {
-            color: var(--gray-400);
-            font-size: 1.25rem;
-        }
-        
         .location-delete {
             background: var(--danger);
             color: white;
             border: none;
-            padding: 0.5rem 1rem;
+            padding: 0.625rem 1.25rem;
             border-radius: 0.5rem;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s;
+            font-size: 0.875rem;
+            white-space: nowrap;
         }
         
         .location-delete:active {
@@ -642,7 +643,10 @@
         <div class="header">
             <div class="header-content">
                 <h1>📦 在庫管理</h1>
-                <button class="header-btn" onclick="showHistory()">🕐</button>
+                <div style="display: flex; gap: 0.5rem;">
+                    <button class="header-btn" id="edit-btn" onclick="toggleEditMode()" style="display: none;">編集</button>
+                    <button class="header-btn" onclick="showHistory()">🕐</button>
+                </div>
             </div>
         </div>
         
