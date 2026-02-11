@@ -126,12 +126,12 @@ function updateUI() {
         locationList.style.display = 'flex';
         
         locationList.innerHTML = manager.locations.map(location => `
-            <div class="location-item" onclick="openScanScreen('${location}')">
-                <div class="location-item-left">
+            <div class="location-item">
+                <div class="location-item-left" onclick="openScanScreen('${location}')">
                     <div class="location-icon">📍</div>
                     <div class="location-name">${location}</div>
                 </div>
-                <div class="location-chevron">›</div>
+                <button class="location-delete" onclick="event.stopPropagation(); deleteLocation('${location}')">削除</button>
             </div>
         `).join('');
     }
@@ -156,6 +156,13 @@ function addLocation() {
     
     if (manager.addLocation(name)) {
         closeAddLocationModal();
+        updateUI();
+    }
+}
+
+function deleteLocation(name) {
+    if (confirm(`「${name}」を削除しますか？`)) {
+        manager.deleteLocation(name);
         updateUI();
     }
 }
