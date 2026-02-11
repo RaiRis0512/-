@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="在庫管理">
+    <title>在庫管理アプリ</title>
+    <link rel="manifest" href="manifest.json">
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1e40af;
+            --secondary: #8b5cf6;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-400: #9ca3af;
+            --gray-500: #6b7280;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+            --gray-900: #111827;
+        }
+        
+        body {
+            font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--gray-50);
+            color: var(--gray-900);
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        
+        /* ヘッダー */
+        .header {
+            background: white;
+            border-bottom: 1px solid var(--gray-200);
+            padding: 1rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .header h1 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--gray-900);
+        }
+        
+        .header-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--gray-600);
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            transition: all 0.2s;
+        }
+        
+        .header-btn:active {
+            background: var(--gray-100);
+            transform: scale(0.95);
+        }
+        
+        /* コンテナ */
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 1rem;
+            min-height: calc(100vh - 180px);
+        }
+        
+        /* 空の状態 */
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: var(--gray-500);
+        }
+        
+        .empty-state-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+        
+        .empty-state h2 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--gray-700);
+        }
+        
+        .empty-state p {
+            font-size: 0.875rem;
+            color: var(--gray-500);
+        }
+        
+        /* ロケーションリスト */
+        .location-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        
+        .location-item {
+            background: white;
+            border-radius: 0.75rem;
+            padding: 1rem 1.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+        }
+        
+        .location-item:active {
+            transform: scale(0.98);
+            border-color: var(--primary);
+        }
+        
+        .location-item-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .location-icon {
+            font-size: 1.5rem;
+            color: var(--primary);
+        }
+        
+        .location-name {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--gray-900);
+        }
+        
+        .location-chevron {
+            color: var(--gray-400);
+            font-size: 1.25rem;
+        }
+        
+        .location-delete {
+            background: var(--danger);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .location-delete:active {
+            background: #dc2626;
+            transform: scale(0.95);
+        }
+        
+        /* ボトムナビゲーション */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            border-top: 1px solid var(--gray-200);
+            padding: 1rem;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .bottom-nav-content {
+            max-width: 600px;
+            margin: 0 auto;
+            display: flex;
+            gap: 0.75rem;
+        }
+        
+        .btn {
+            flex: 1;
+            padding: 1rem;
+            border: none;
+            border-radius: 0.75rem;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: all 0.2s;
+            font-family: 'Noto Sans JP', sans-serif;
+        }
+        
+        .btn:active {
+            transform: scale(0.95);
+        }
+        
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .btn-primary:active {
+            background: var(--primary-dark);
+        }
+        
+        .btn-secondary {
+            background: var(--secondary);
+            color: white;
+        }
+        
+        .btn-secondary:active {
+            background: #7c3aed;
+        }
+        
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+        
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+        
+        .btn-warning {
+            background: var(--warning);
+            color: white;
+        }
+        
+        /* モーダル */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            animation: fadeIn 0.2s;
+        }
+        
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 1rem;
+            padding: 2rem;
+            max-width: 90%;
+            width: 400px;
+            animation: slideUp 0.3s;
+        }
+        
+        .modal-header {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+        
+        .modal-body {
+            margin-bottom: 1.5rem;
+        }
+        
+        .input-group {
+            margin-bottom: 1rem;
+        }
+        
+        .input-label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--gray-700);
+            margin-bottom: 0.5rem;
+        }
+        
+        .input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 2px solid var(--gray-300);
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            font-family: 'Noto Sans JP', sans-serif;
+            transition: all 0.2s;
+        }
+        
+        .input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        
+        .input-lg {
+            font-size: 1.5rem;
+            padding: 1rem;
+        }
+        
+        .modal-footer {
+            display: flex;
+            gap: 0.75rem;
+        }
+        
+        /* スキャン画面 */
+        .scan-screen {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: black;
+            z-index: 999;
+        }
+        
+        .scan-screen.active {
+            display: block;
+        }
+        
+        .scan-header {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 1rem;
+            z-index: 10;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .scan-back-btn {
+            background: rgba(255,255,255,0.2);
+            backdrop-filter: blur(10px);
+            color: white;
+            border: none;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .scan-location {
+            background: var(--primary);
+            color: white;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .scan-mode-toggle {
+            background: var(--warning);
+            color: white;
+            border: none;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        #qr-reader {
+            width: 100%;
+            height: 100vh;
+        }
+        
+        .manual-input-screen {
+            display: none;
+            background: var(--gray-100);
+            padding: 2rem;
+            height: 100vh;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .manual-input-screen.active {
+            display: flex;
+        }
+        
+        .manual-input-box {
+            background: white;
+            border-radius: 1rem;
+            padding: 2rem;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .scan-footer {
+            position: absolute;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+        }
+        
+        .scan-history-btn {
+            background: var(--success);
+            color: white;
+            border: none;
+            padding: 1.25rem 2rem;
+            border-radius: 1rem;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        
+        .scan-history-btn-icon {
+            font-size: 2rem;
+        }
+        
+        /* 履歴画面 */
+        .history-screen {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--gray-50);
+            z-index: 1000;
+            overflow-y: auto;
+        }
+        
+        .history-screen.active {
+            display: block;
+        }
+        
+        .history-list {
+            padding: 1rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .history-item {
+            background: white;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            position: relative;
+        }
+        
+        .history-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        
+        .history-item-code {
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: var(--gray-900);
+        }
+        
+        .history-item-quantity {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+        
+        .history-item-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.875rem;
+            color: var(--gray-500);
+        }
+        
+        .history-item-location {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+        
+        .history-delete-btn {
+            background: var(--danger);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 0.5rem;
+        }
+        
+        /* CSV出力画面 */
+        .csv-screen {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--gray-50);
+            z-index: 1000;
+            overflow-y: auto;
+        }
+        
+        .csv-screen.active {
+            display: block;
+        }
+        
+        .csv-list {
+            padding: 1rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .csv-item {
+            background: white;
+            border-radius: 0.75rem;
+            padding: 1rem 1.25rem;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .csv-item:active {
+            transform: scale(0.98);
+            background: var(--gray-50);
+        }
+        
+        .csv-all-export {
+            background: var(--success);
+            color: white;
+            border: none;
+            padding: 1.25rem;
+            border-radius: 0.75rem;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            margin-top: 1rem;
+            width: 100%;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes slideUp {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        /* ローディング */
+        .loading {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            z-index: 2000;
+        }
+        
+        .loading.active {
+            display: block;
+        }
+        
+        .spinner {
+            border: 4px solid var(--gray-200);
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <!-- ホーム画面 -->
+    <div id="home-screen">
+        <div class="header">
+            <div class="header-content">
+                <h1>📦 在庫管理</h1>
+                <button class="header-btn" onclick="showHistory()">🕐</button>
+            </div>
+        </div>
+        
+        <div class="container">
+            <div id="empty-state" class="empty-state">
+                <div class="empty-state-icon">📍</div>
+                <h2>ロケーションが登録されていません</h2>
+                <p>下のボタンからロケーションを追加してください</p>
+            </div>
+            
+            <div id="location-list" class="location-list"></div>
+        </div>
+        
+        <div class="bottom-nav">
+            <div class="bottom-nav-content">
+                <button class="btn btn-primary" onclick="showAddLocationModal()">
+                    ➕ ロケーション追加
+                </button>
+                <button class="btn btn-secondary" onclick="showCSVScreen()">
+                    📤 CSV出力
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- ロケーション追加モーダル -->
+    <div id="add-location-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">新しいロケーション</div>
+            <div class="modal-body">
+                <div class="input-group">
+                    <input type="text" id="new-location-input" class="input input-lg" placeholder="ロケーション名を入力" />
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-danger" onclick="closeAddLocationModal()" style="flex: 0.5;">キャンセル</button>
+                <button class="btn btn-primary" onclick="addLocation()">追加</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- スキャン画面 -->
+    <div id="scan-screen" class="scan-screen">
+        <div class="scan-header">
+            <button class="scan-back-btn" onclick="closeScanScreen()">
+                ← 戻る
+            </button>
+            <div class="scan-location">
+                📍 <span id="current-location"></span>
+            </div>
+            <button class="scan-mode-toggle" onclick="toggleScanMode()">
+                <span id="mode-icon">⌨️</span> <span id="mode-text">手入力</span>
+            </button>
+        </div>
+        
+        <div id="qr-reader"></div>
+        
+        <div id="manual-input-screen" class="manual-input-screen">
+            <div class="manual-input-box">
+                <h2 style="text-align: center; margin-bottom: 1.5rem;">品番を入力</h2>
+                <input type="text" id="manual-code-input" class="input input-lg" placeholder="品番" style="margin-bottom: 1rem;" />
+                <button class="btn btn-primary" onclick="submitManualCode()" style="width: 100%;">次へ</button>
+            </div>
+        </div>
+        
+        <div class="scan-footer">
+            <button class="scan-history-btn" onclick="showHistory()">
+                <span class="scan-history-btn-icon">🕐</span>
+                履歴
+            </button>
+        </div>
+    </div>
+    
+    <!-- 数量入力モーダル -->
+    <div id="quantity-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">数量入力</div>
+            <div class="modal-body">
+                <div class="input-group">
+                    <label class="input-label">品番</label>
+                    <div style="font-size: 1.5rem; font-weight: 700; color: var(--gray-900);" id="modal-code"></div>
+                </div>
+                <div class="input-group">
+                    <label class="input-label">ロケーション</label>
+                    <div style="font-size: 1.125rem; color: var(--gray-700);" id="modal-location"></div>
+                </div>
+                <div class="input-group">
+                    <label class="input-label">数量</label>
+                    <input type="number" id="quantity-input" class="input input-lg" placeholder="数量を入力" inputmode="numeric" />
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-danger" onclick="closeQuantityModal()" style="flex: 0.5;">キャンセル</button>
+                <button class="btn btn-success" onclick="saveInventoryItem()">保存</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 履歴画面 -->
+    <div id="history-screen" class="history-screen">
+        <div class="header">
+            <div class="header-content">
+                <button class="header-btn" onclick="closeHistory()">← 戻る</button>
+                <h1>履歴 (<span id="history-count">0</span>件)</h1>
+                <div style="width: 40px;"></div>
+            </div>
+        </div>
+        <div id="history-list" class="history-list"></div>
+    </div>
+    
+    <!-- CSV出力画面 -->
+    <div id="csv-screen" class="csv-screen">
+        <div class="header">
+            <div class="header-content">
+                <button class="header-btn" onclick="closeCSVScreen()">← 戻る</button>
+                <h1>CSV出力</h1>
+                <div style="width: 40px;"></div>
+            </div>
+        </div>
+        <div class="csv-list">
+            <div id="csv-location-list"></div>
+            <button class="csv-all-export" onclick="exportAllCSV()">
+                📊 全データ出力
+            </button>
+        </div>
+    </div>
+    
+    <!-- ローディング -->
+    <div id="loading" class="loading">
+        <div class="spinner"></div>
+    </div>
+    
+    <!-- QRコードスキャナーライブラリ -->
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    
+    <script src="app.js"></script>
+</body>
+</html>
